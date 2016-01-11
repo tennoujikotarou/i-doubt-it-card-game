@@ -12,7 +12,8 @@ Be the 1st player to get rid of all your cards!!!
 * Additional Condition  
 	Player wins if:   
      * The last card in hand matches with the rank of the lead
-     * (more condition?)
+     * (more condition?)   
+
 ## Players
 
 * 3-5 players -> 1 deck (52 cards)
