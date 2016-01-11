@@ -6,11 +6,11 @@ using System.Collections.Generic;
 public class DebugDealer : MonoBehaviour
 {
     private CardStack dealer;
-    private List<CardStack> player;
+    private CardStack[] player;
 
     void Awake ()
     {
-        player = new List<CardStack>();
+        player = new CardStack[4];
         dealer = GameObject.Find("Dealer").GetComponent<CardStack>();
         player[0] = GameObject.Find("Player1").GetComponent<CardStack>();
         player[1] = GameObject.Find("Player2").GetComponent<CardStack>();
