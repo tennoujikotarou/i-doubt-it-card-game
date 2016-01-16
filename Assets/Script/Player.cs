@@ -1,19 +1,44 @@
 ﻿using UnityEngine;
-using System.Collections;
+using UnityEngine.UI;
 
-[RequireComponent(typeof(CardStack))]
+public class Player : MonoBehaviour
+{
+    public string PlayerName { get; set; }
+    public CardStack playerStack { get; set; }
 
-public class Player : MonoBehaviour {
+    public bool isPlayerTurn { get; set; }
 
-    private CardStack playerStack;
+    public bool canCallDoubt { get; set; }
 
-    // Use this for initialization
-    void Start () {
-	
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
+    public event DoubtCallEventHandler callDoubt;
+
+    void Start()
+    {
+        string playerButton = PlayerName + "ButtonDoubt";
+        Button btnDoubt = GameObject.Find(playerButton).GetComponent<Button>();
+        btnDoubt.onClick.AddListener(delegate { Doubt(); } );
+        canCallDoubt = false;
+    }
+
+    public void Doubt()
+    {
+        if (callDoubt != null && canCallDoubt)
+        {
+            callDoubt(this, new DoubtCallEventHandlerArgs(true));
+        }
+    }
+
+    void FixedUpdate()
+    {
+        string playerPanel = PlayerName + "Panel";
+        Image activeBg = GameObject.Find(playerPanel).GetComponent<Image>();
+        if(isPlayerTurn)
+        {
+            activeBg.CrossFadeAlpha(1.5f, 1f, false);
+        }
+        else
+        {
+            activeBg.CrossFadeAlpha(0.2f, 1f, false);
+        }
+    }
 }

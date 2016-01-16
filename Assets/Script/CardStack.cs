@@ -1,10 +1,10 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class CardStack : MonoBehaviour
 {
-    private string[] suits = { "Spade", "Club", "Diamond", "Heart" };
+    public static string[] suits = { "Spade", "Club", "Diamond", "Heart" };
+    public static string[] ranks = { "Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King" };
     private List<Card> cards;
     public bool isGameStack;
 
