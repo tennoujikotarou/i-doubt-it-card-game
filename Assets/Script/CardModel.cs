@@ -45,9 +45,9 @@ public class CardModel : MonoBehaviour
         //{
         //    return;
         //}
-        Debug.Log("Id: " + card.id);
-        Debug.Log("Rank: " + card.rank);
-        Debug.Log("Suit: " + card.suit);
+        //Debug.Log("Id: " + card.id);
+        //Debug.Log("Rank: " + card.rank);
+        //Debug.Log("Suit: " + card.suit);
 
         if(transform.parent.ToString().Contains("Player")) { 
             CardStack dealer = GameObject.Find("Dealer").GetComponent<CardStack>();

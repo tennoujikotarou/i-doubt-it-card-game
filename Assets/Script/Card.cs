@@ -9,6 +9,7 @@ public class Card
 
     public bool isFacedUp { get; set; }
     public Vector3 cardPosition { get; set; }
+    public Vector3 cardRotation { get; set; }
 
     public void FlipCard()
     {

@@ -100,7 +100,7 @@ public class CardStackView : MonoBehaviour
                 GameObject cardCopy;
                 if (hasCardPosition)
                 {
-                    cardCopy = (GameObject)Instantiate(cardPrefab, card.cardPosition, transform.rotation);
+                    cardCopy = (GameObject)Instantiate(cardPrefab, card.cardPosition, Quaternion.Euler(card.cardRotation));
                 }
                 else
                 {
@@ -108,6 +108,10 @@ public class CardStackView : MonoBehaviour
                 }
 
                 card.isFacedUp = cardStack.isGameStack ? false : true;
+                if(cardStack.transform.GetComponent<Player>() != null)
+                {
+                    card.isFacedUp = cardStack.transform.GetComponent<Player>().isHuman ? true : false;
+                }
 
                 cardCopy.AddComponent<CardModel>();
                 cardCopy.GetComponent<CardModel>().id = card.id;
@@ -126,12 +130,25 @@ public class CardStackView : MonoBehaviour
 
     void ArrangeCard(Card cardAdd, GameObject cardCopyAdd, Vector3 startingPosition, int offset)
     {
-        Vector3 position = new Vector3(startingPos.x + 0.005f * offset, startingPos.y, startingPos.z - 0.0001f * offset);
+        Vector3 position = new Vector3(startingPosition.x + 0.005f * offset, startingPosition.y, startingPosition.z - 0.0001f * offset);
         Vector3 angle = transform.rotation.eulerAngles;
+
+        //Vector3 localScale = cardPrefab.transform.localScale * 1.25f;
+        //float localScaleY = transform.localScale.y;
+
+        float cardWidth = cardPrefab.GetComponent<BoxCollider2D>().size.x;
+        float maxWidth = transform.GetComponent<MeshRenderer>().bounds.size.x;
+        float leftPos = startingPosition.x - (maxWidth / 2);
+        float margin = cardWidth + 0.2f;
+
+        if(margin * (cardStack.Size - 1) > maxWidth)
+        {
+            margin = maxWidth / (cardStack.Size - 1);
+        }
 
         if (!cardStack.isGameStack)
         {
-            position = new Vector3(startingPosition.x + 0.5f * offset, startingPosition.y, startingPosition.z - 0.0001f * offset);
+            position = new Vector3(leftPos + margin * offset, startingPosition.y, startingPosition.z - 0.0001f * offset);
         }
 
         // face down = 180f, face up = 0f (for my card prefab)
@@ -140,16 +157,20 @@ public class CardStackView : MonoBehaviour
         // move the cards to their respective position
         // instant position and rotation, no "moving animation"
         //cardCopyAdd.transform.position = position;
-        cardCopyAdd.transform.rotation = Quaternion.Euler(angle);
+        //cardCopyAdd.transform.rotation = Quaternion.Euler(angle);
 
         // "moving and rotation animation"
         cardCopyAdd.transform.position = Vector3.Lerp(cardCopyAdd.transform.position, position, (Time.time - startTime) / 1f);
-        //cardCopyAdd.transform.rotation = Quaternion.Slerp(Quaternion.Euler(transform.rotation.eulerAngles), Quaternion.Euler(angle), (Time.time - startTime) / 1f);
+        cardCopyAdd.transform.rotation = Quaternion.Slerp(Quaternion.Euler(cardCopyAdd.transform.rotation.eulerAngles), Quaternion.Euler(angle), (Time.time - startTime) / 1f);
+
+        // scale card
+        //cardCopyAdd.transform.localScale = Vector3.Lerp(cardCopyAdd.transform.localScale, localScale, (Time.time - startTime) / 1f);
 
         cardAdd.cardPosition = position;
+        cardAdd.cardRotation = angle;
 
         // group them up
         // make them as the children to the game object with this script attached
-        cardCopyAdd.transform.parent = transform;
+        cardCopyAdd.transform.SetParent(transform, true);
     }
 }
