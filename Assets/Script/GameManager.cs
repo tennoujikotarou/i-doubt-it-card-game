@@ -182,6 +182,7 @@ public class GameManager : MonoBehaviour
 
         if (challenger == null) // last card check
         {
+            if (currentPlayer == 0) { players[0].playerStack.zoomCard = true; }
             players[currentPlayer].isPlayerTurn = false;
             //currentRank = (currentRank + 1) < 13 ? (currentRank + 1) : 0;
             //currentRankText.text = "Current Rank: " + CardStack.ranks[currentRank];
@@ -200,7 +201,9 @@ public class GameManager : MonoBehaviour
             {
                 Debug.Log("Die, " + players[currentPlayer].RealName + "!!!");
                 PlayerGetCardStack(players[currentPlayer]);
-                
+
+                yield return new WaitForSeconds(1f);
+
                 ChangeTurn();
             }
             else
@@ -239,6 +242,8 @@ public class GameManager : MonoBehaviour
                 Debug.Log(challenger.RealName + " is dying...");
                 PlayerGetCardStack(challenger);
             }
+
+            yield return new WaitForSeconds(1f);
 
             ChangeTurn();
         }

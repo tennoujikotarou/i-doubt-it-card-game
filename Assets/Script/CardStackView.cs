@@ -175,7 +175,7 @@ public class CardStackView : MonoBehaviour
 
     void ArrangeCard(Card cardAdd, GameObject cardCopyAdd, Vector3 startingPosition, int offset)
     {
-        position = new Vector3(startingPosition.x + 0.005f * offset, startingPosition.y, startingPosition.z - 0.0001f * offset);
+        position = new Vector3(startingPosition.x + 0.005f * offset, startingPosition.y, startingPosition.z - 0.0001f * offset - 0.0001f);
         angle = transform.rotation.eulerAngles;
         scale = new Vector3(1f, 1f, 1f);
 
@@ -204,7 +204,7 @@ public class CardStackView : MonoBehaviour
 
         if (!cardStack.isGameStack)
         {
-            position = new Vector3(leftPos + margin * offset, startingPosition.y, startingPosition.z - 0.0001f * offset);
+            position = new Vector3(leftPos + margin * offset, startingPosition.y, startingPosition.z - 0.0001f * offset - 0.0001f);
         }
 
         // face down = 180f, face up = 0f (for my card prefab)
