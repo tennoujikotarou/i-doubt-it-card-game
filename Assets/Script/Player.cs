@@ -5,11 +5,17 @@ public class Player : MonoBehaviour
 {
     public string PlayerName { get; set; }
     public string RealName { get; set; }
+    public int playerIndex { get; set; }
+
     public bool isHuman { get; set; }
+    public bool localPlayer { get; set; }
+
     public CardStack playerStack { get; set; }
+
     public bool isPlayerTurn { get; set; }
-    public int playerTurn { get; set; }
     public bool canCallDoubt { get; set; }
+
+    public int playerTurn { get; set; }
     public int endGameRank { get; private set; }
 
     public bool isPlayDiceRolled { get; set; }
@@ -22,7 +28,7 @@ public class Player : MonoBehaviour
 
     private int honestChance
     {
-        get { return (playerStack.Size <= 6 || cardStackSize >= 4) ? 90 : 10; }
+        get { return (playerStack.Size <= 6 || cardStackSize >= 4) ? 90 : 30; }
     }
 
     private int DoubtChance
@@ -42,13 +48,13 @@ public class Player : MonoBehaviour
             switch (cardCount)
             {
                 case 0:
-                    return 5;
-                case 1:
                     return 10;
-                case 2:
+                case 1:
                     return 20;
+                case 2:
+                    return 30;
                 case 3:
-                    return 65;
+                    return 70;
                 case 4:
                     return 100;
                 default:
@@ -72,7 +78,7 @@ public class Player : MonoBehaviour
         isDoubtDiceRolled = false;
 
         GameObject.Find(PlayerName + "Name").GetComponent<Text>().text = RealName;
-        neptuneSprite = Resources.LoadAll<Sprite>("neptune_sprite");
+        //neptuneSprite = Resources.LoadAll<Sprite>("neptune_sprite");
     }
 
     public void Doubt()
@@ -96,7 +102,7 @@ public class Player : MonoBehaviour
                 isPlayDiceRolled = true;
             }
 
-            if(canCallDoubt && !isDoubtDiceRolled && cardStackSize >= 5)
+            if(canCallDoubt && !isDoubtDiceRolled && cardStackSize >= 3)
             {
                 AutoDoubt();
                 isDoubtDiceRolled = true;
@@ -120,7 +126,6 @@ public class Player : MonoBehaviour
 
     public void CalculateEndGameRank(int currentRank, int numberOfPlayer)
     {
-        currentRank = (currentRank + 1) < 13 ? (currentRank + 1) : 0;
         Debug.Log("=========================");
         Debug.Log("PlayerStack size: " + playerStack.Size);
         Debug.Log("numberOfPlayer: " + numberOfPlayer);
@@ -136,7 +141,7 @@ public class Player : MonoBehaviour
     {
         int randomPlay = 0;
         int diceRoll = Random.Range(0, 100);
-        int currentRank = (GameManager.currentRank + 1) < 13 ? (GameManager.currentRank + 2) : 1;
+        int currentRank = GameManager.currentRank + 1;
 
         bool canHonest = false;
         int matchCardCount = 0;
@@ -176,7 +181,7 @@ public class Player : MonoBehaviour
         else
         {
             // find the card that doesnt match with the current rank
-            while (playerStack.transform.GetChild(randomPlay).GetComponent<CardModel>().rank == currentRank 
+            while (playerStack.transform.GetChild(randomPlay).GetComponent<CardModel>().rank == currentRank
                 || playerStack.transform.GetChild(randomPlay).GetComponent<CardModel>().rank == endGameRank)
             {
                 randomPlay = Random.Range(0, playerStack.Size);
@@ -187,7 +192,8 @@ public class Player : MonoBehaviour
                 }
             }
         }
-        playerStack.transform.GetChild(randomPlay).GetComponent<CardModel>().Invoke("OnMouseUp", 1f);
+        //Debug.Log("====Card play: " + playerStack.transform.GetChild(randomPlay).GetComponent<CardModel>().rank + "====");
+        playerStack.transform.GetChild(randomPlay).GetComponent<CardModel>().Invoke("PlayCard", 1f);
     }
 
     private void AutoDoubt()

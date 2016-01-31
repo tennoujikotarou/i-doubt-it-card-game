@@ -11,20 +11,31 @@ public class GameManager : MonoBehaviour
     private int numberOfPlayer;
 
     private int numberOfTurn;
-    private Text numberOfTurnText;
     public static int currentRank;
-    private Text currentRankText;
-    private int currentPlayer;
-    private Text currentPlayerText;
+    public static int currentPlayer;
+    public Text numberOfTurnText;
+    public Text currentRankText;
+    public Text currentPlayerText;
+
+    public GameObject p1TextBubble;
+    public GameObject p2TextBubble;
+    public GameObject p3TextBubble;
+    public GameObject p4TextBubble;
+
+    public GameObject pauseMenu;
 
     void Awake()
     {
         numberOfPlayer = 4;
         currentPlayer = 0;
-        currentRank = 12;
-        currentRankText = GameObject.Find("CurrentRank").GetComponent<Text>();
-        currentPlayerText = GameObject.Find("CurrentPlayer").GetComponent<Text>();
-        numberOfTurnText = GameObject.Find("Turn").GetComponent<Text>();
+        currentRank = 0;
+
+        p1TextBubble.SetActive(false);
+        p2TextBubble.SetActive(false);
+        p3TextBubble.SetActive(false);
+        p4TextBubble.SetActive(false);
+
+        pauseMenu.SetActive(false);
 
         players = new List<Player>();
         dealer = GameObject.Find("Dealer").GetComponent<CardStack>();
@@ -33,11 +44,12 @@ public class GameManager : MonoBehaviour
             string playerObjectString = "Player" + (i + 1).ToString();
 
             Player player = GameObject.Find(playerObjectString).GetComponent<Player>();
-            player.playerStack = GameObject.Find(playerObjectString).GetComponent<CardStack>();
+            player.playerStack = player.GetComponent<CardStack>();
             
             player.isHuman = i == 0 ? true : false;
+            player.localPlayer = i == 0 ? true : false;
             player.isPlayerTurn = false;
-            player.playerTurn = i;
+            player.playerTurn = player.playerIndex = i;
 
             player.PlayerName = playerObjectString;
             player.playerStack.cardRemoved += CardStack_cardRemoved;
@@ -79,7 +91,7 @@ public class GameManager : MonoBehaviour
     {
         if (e.CallDoubt)
         {
-            //Debug.Log(((Player)sender).PlayerName + " call doubt!");
+            Debug.Log(((Player)sender).PlayerName + " call doubt!");
 
             StopCoroutine(changePlayerTurn);
             StartCoroutine(DoubtCallEvent((Player)sender));
@@ -89,30 +101,30 @@ public class GameManager : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        players[currentPlayer].isPlayerTurn = true;
-
         numberOfTurn = 0;
-        currentRankText.text = "Current Rank: ";
+        numberOfTurnText.text = "Turn: " + (++numberOfTurn);
+        currentRankText.text = "Current Rank: " + CardStack.ranks[currentRank];
         currentPlayerText.text = "Current Player: " + players[currentPlayer].RealName;
-        while (dealer.Size != 0)
-        {
-            foreach (Player player in players)
-            {
-                player.playerStack.Add(dealer.RemoveAt(dealer.Size - 1));
-            }
-        }
-
-        foreach (Player player in players)
-        {
-            player.CalculateEndGameRank(currentRank + 1, numberOfPlayer);
-        }
 
         changePlayerTurn = ChangePlayerTurn();
+        StartCoroutine(DrawCards());
     }
 
     // Update is called once per frame
     void Update()
     {
+    }
+
+    void OnEnable()
+    {
+        //if (players != null)
+        //{
+        //    foreach (Player player in players)
+        //    {
+        //        player.playerStack.cardRemoved += CardStack_cardRemoved;
+        //        player.callDoubt += Player_callDoubt;
+        //    }
+        //}
     }
 
     void OnDisable()
@@ -127,16 +139,38 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    IEnumerator DrawCards()
+    {
+        yield return new WaitForSeconds(2f);
+
+        while (dealer.Size != 0)
+        {
+            foreach (Player player in players)
+            {
+                player.playerStack.Add(dealer.RemoveAt(dealer.Size - 1));
+                yield return new WaitForSeconds(0.1f);
+            }
+        }
+
+        foreach (Player player in players)
+        {
+            player.CalculateEndGameRank(currentRank + 1, numberOfPlayer);
+        }
+
+        yield return new WaitForSeconds(2f);
+
+        players[0].playerStack.zoomCard = true;
+        players[currentPlayer].isPlayerTurn = true;
+    }
+
     IEnumerator ChangePlayerTurn()
     {
+        if(currentPlayer == 0) { players[0].playerStack.zoomCard = true; }
         players[currentPlayer].isPlayerTurn = false;
-        currentRank = (currentRank + 1) < 13 ? (currentRank + 1) : 0;
-        currentRankText.text = "Current Rank: " + CardStack.ranks[currentRank];
 
         // wait for 5 seconds before changing player turn
         yield return new WaitForSeconds(1f);
-
-        //players[currentPlayer].isPlayDiceRolled = false;
+        
         ChangeTurn();
     }
     IEnumerator DoubtCallEvent(Player challenger)
@@ -149,8 +183,8 @@ public class GameManager : MonoBehaviour
         if (challenger == null) // last card check
         {
             players[currentPlayer].isPlayerTurn = false;
-            currentRank = (currentRank + 1) < 13 ? (currentRank + 1) : 0;
-            currentRankText.text = "Current Rank: " + CardStack.ranks[currentRank];
+            //currentRank = (currentRank + 1) < 13 ? (currentRank + 1) : 0;
+            //currentRankText.text = "Current Rank: " + CardStack.ranks[currentRank];
 
             yield return new WaitForSeconds(2f);
 
@@ -177,6 +211,11 @@ public class GameManager : MonoBehaviour
         }
         else // normal doubting event
         {
+            if (challenger.PlayerName.Contains("Player1")) { p1TextBubble.SetActive(true); }
+            if (challenger.PlayerName.Contains("Player2")) { p2TextBubble.SetActive(true); }
+            if (challenger.PlayerName.Contains("Player3")) { p3TextBubble.SetActive(true); }
+            if (challenger.PlayerName.Contains("Player4")) { p4TextBubble.SetActive(true); }
+
             CardModel card = dealer.transform.GetChild(dealer.transform.childCount - 1).GetComponent<CardModel>();
             card.flipCard = true;
 
@@ -184,6 +223,11 @@ public class GameManager : MonoBehaviour
             //Debug.Log("Current rank: " + (currentRank + 1));
 
             yield return new WaitForSeconds(2f);
+
+            if (challenger.PlayerName.Contains("Player1")) { p1TextBubble.SetActive(false); }
+            if (challenger.PlayerName.Contains("Player2")) { p2TextBubble.SetActive(false); }
+            if (challenger.PlayerName.Contains("Player3")) { p3TextBubble.SetActive(false); }
+            if (challenger.PlayerName.Contains("Player4")) { p4TextBubble.SetActive(false); }
 
             if (card.rank != (currentRank + 1))
             {
@@ -207,8 +251,8 @@ public class GameManager : MonoBehaviour
             player.playerStack.Add(dealer.RemoveAt(dealer.Size - 1));
         }
         int newTurn = (currentPlayer + 1) < 4 ? (currentPlayer + 1) : 0;
-        player.playerTurn = (player.playerTurn - newTurn) >= 0 ? (player.playerTurn - newTurn) : (player.playerTurn + (4 - newTurn));
-        player.CalculateEndGameRank(currentRank + 1, numberOfPlayer);
+        player.playerTurn = (player.playerIndex - newTurn) >= 0 ? (player.playerIndex - newTurn) : (player.playerIndex + (4 - newTurn));
+        player.CalculateEndGameRank(currentRank + 2, numberOfPlayer);
     }
 
     private void ChangeTurn()
@@ -223,6 +267,28 @@ public class GameManager : MonoBehaviour
             player.isPlayDiceRolled = false;
         }
         currentPlayerText.text = "Current Player: " + players[currentPlayer].RealName;
-        numberOfTurnText.text = "Turn: " + (++numberOfTurn);
+
+        if(currentPlayer == 0) { 
+            numberOfTurnText.text = "Turn: " + (++numberOfTurn);
+        }
+
+        currentRank = (currentRank + 1) < 13 ? (currentRank + 1) : 0;
+        currentRankText.text = "Current Rank: " + CardStack.ranks[currentRank];
+        
+        if (currentPlayer == 0) { players[0].playerStack.zoomCard = true; }
+    }
+
+    public void PauseGame()
+    {
+        if (Time.timeScale == 1.0f)
+        {
+            pauseMenu.SetActive(true);
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            pauseMenu.SetActive(false);
+            Time.timeScale = 1.0f;
+        }
     }
 }

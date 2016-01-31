@@ -3,9 +3,12 @@
 public class CardModel : MonoBehaviour
 {
     private Card card;
-    private Vector3 mousePosition;
     private float startTime;
     private bool _flipCard;
+
+    private Vector3 mousePosition;
+    private Vector3 screenPoint;
+    private Vector3 offset;
 
     // Use this for initialization
     void Awake ()
@@ -37,26 +40,60 @@ public class CardModel : MonoBehaviour
     void OnMouseDown()
     {
         mousePosition = Input.mousePosition;
+
+        screenPoint = Camera.main.WorldToScreenPoint(transform.parent.position);
+        offset = transform.parent.position - Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z));
+    }
+
+    void OnMouseDrag()
+    {
+        if (transform.parent.ToString().Contains("Player1") && transform.parent.GetComponent<Player>().isPlayerTurn)
+        {
+            Vector3 curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z);
+            Vector3 curPosition = Camera.main.ScreenToWorldPoint(curScreenPoint) + offset;
+
+            curPosition.y = transform.parent.position.y;
+            curPosition.z = transform.parent.position.z;
+            transform.parent.position = curPosition;
+        }
     }
 
     void OnMouseUp()
     {
-        //if(mousePosition != Input.mousePosition)
-        //{
-        //    return;
-        //}
+        if (mousePosition != Input.mousePosition)
+        {
+            return;
+        }
         //Debug.Log("Id: " + card.id);
         //Debug.Log("Rank: " + card.rank);
         //Debug.Log("Suit: " + card.suit);
 
-        if(transform.parent.ToString().Contains("Player")) { 
+        if (transform.parent.ToString().Contains("Player")) { 
             CardStack dealer = GameObject.Find("Dealer").GetComponent<CardStack>();
             Player player = transform.parent.GetComponent<Player>();
-            CardStack playerStack = player.playerStack;
 
-            if (player.isPlayerTurn && !playerStack.isGameStack)
+            if (player.isPlayerTurn 
+                && player.localPlayer
+                && !player.playerStack.isGameStack)
             {
-                dealer.Add(playerStack.Remove(card));
+                dealer.Add(player.playerStack.Remove(card));
+            }
+        }
+    }
+
+    void PlayCard()
+    {
+        // for bot only
+        if (transform.parent.ToString().Contains("Player"))
+        {
+            CardStack dealer = GameObject.Find("Dealer").GetComponent<CardStack>();
+            Player player = transform.parent.GetComponent<Player>();
+
+            if (player.isPlayerTurn 
+                && !player.isHuman
+                && !player.playerStack.isGameStack)
+            {
+                dealer.Add(player.playerStack.Remove(card));
             }
         }
     }
@@ -94,6 +131,9 @@ public class CardModel : MonoBehaviour
         Vector3 angle = transform.rotation.eulerAngles;
         angle.y = card.isFacedUp ? 0f : 180f;
 
-        transform.rotation = Quaternion.Slerp(Quaternion.Euler(transform.rotation.eulerAngles), Quaternion.Euler(angle), (Time.time - startTime) / 1.5f);
+        transform.rotation = Quaternion.Slerp(
+                Quaternion.Euler(transform.rotation.eulerAngles), 
+                Quaternion.Euler(angle), 
+                (Time.time - startTime) / 1.5f);
     }
 }

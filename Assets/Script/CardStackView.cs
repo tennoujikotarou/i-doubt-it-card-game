@@ -11,9 +11,17 @@ public class CardStackView : MonoBehaviour
 
     private Dictionary<int, GameObject> fetchedCard;
     private int stackLastCount;
-
-    private Vector3 startingPos;
+    
     private float startTime;
+    private Vector3 startingPos;
+
+    private Vector3 position;
+    private Vector3 angle;
+    private Vector3 scale;
+    float cardWidth;
+    float maxWidth;
+    float leftPos;
+    float margin;
 
     void Awake()
     {
@@ -31,14 +39,17 @@ public class CardStackView : MonoBehaviour
         cardStack.cardRemoved += CardStack_cardRemoved;
 
         // Get the game object's position to put the cards on
-        startingPos = transform.position;
         startTime = Time.time;
+        startingPos = transform.position;
 
         ShowCards(false);
     }
+
     void OnEnable()
     {
-        //cardStack.cardRemoved += CardStack_cardRemoved;
+        //if(cardStack != null) { 
+        //    cardStack.cardRemoved += CardStack_cardRemoved;
+        //}
     }
     void OnDisable()
     {
@@ -54,9 +65,16 @@ public class CardStackView : MonoBehaviour
         }
     }
 
+    bool isZooming = false;
     // Update is called once per frame
     void Update()
     {
+        if(cardStack.zoomCard)
+        {
+            startTime = Time.time;
+            cardStack.zoomCard = false;
+            isZooming = true;
+        }
     }
 
     void FixedUpdate()
@@ -79,7 +97,32 @@ public class CardStackView : MonoBehaviour
             }
 
             GameObject cardCopy = transform.GetChild(offset).gameObject;
-            ArrangeCard(card, cardCopy, startingPos, offset);
+            ArrangeCard(card, cardCopy, transform.position, offset);
+        }
+
+
+        // make the cards stand next to each other
+        if (transform.ToString().Contains("Player1") && isZooming)
+        {
+            if (GetComponent<Player>().isPlayerTurn)
+            {
+                cardWidth = cardPrefab.GetComponent<BoxCollider2D>().size.x * 1.75f;
+                maxWidth = 16f;// transform.GetComponent<BoxCollider2D>().size.x;
+                leftPos = startingPos.x - (maxWidth / 2);
+
+                float newWidth = (cardWidth + 0.2f) * cardStack.Size;
+                float newPosX = leftPos + (newWidth / 2);
+
+                transform.position = Vector3.Lerp(transform.position, new Vector3(transform.position.x, -5.23f, -1f), (Time.time - startTime) / 1f);
+                transform.GetComponent<BoxCollider2D>().size = new Vector2(newWidth, 3.5f);
+            }
+            else
+            {
+                transform.position = Vector3.Lerp(transform.position, startingPos, (Time.time - startTime) / 1f);
+                transform.GetComponent<BoxCollider2D>().size = new Vector2(16f, 3.5f);
+            }
+
+            if((Time.time - startTime) / 1f > 1) { isZooming = false; }
         }
     }
 
@@ -101,6 +144,7 @@ public class CardStackView : MonoBehaviour
                 if (hasCardPosition)
                 {
                     cardCopy = (GameObject)Instantiate(cardPrefab, card.cardPosition, Quaternion.Euler(card.cardRotation));
+                    cardCopy.transform.localScale = card.scaleValue;
                 }
                 else
                 {
@@ -108,9 +152,10 @@ public class CardStackView : MonoBehaviour
                 }
 
                 card.isFacedUp = cardStack.isGameStack ? false : true;
+
                 if(cardStack.transform.GetComponent<Player>() != null)
                 {
-                    card.isFacedUp = cardStack.transform.GetComponent<Player>().isHuman ? true : false;
+                    card.isFacedUp = cardStack.transform.GetComponent<Player>().localPlayer ? true : false;
                 }
 
                 cardCopy.AddComponent<CardModel>();
@@ -122,7 +167,7 @@ public class CardStackView : MonoBehaviour
                 GameObject cardFaceTexture = cardCopy.transform.Find("CardFace").gameObject;
                 cardFaceTexture.GetComponent<SpriteRenderer>().sprite = cardTextures[card.id];
 
-                ArrangeCard(card, cardCopy, startingPos, offset);
+                ArrangeCard(card, cardCopy, transform.position, offset);
                 fetchedCard.Add(card.id, cardCopy);
             }
         }
@@ -130,20 +175,31 @@ public class CardStackView : MonoBehaviour
 
     void ArrangeCard(Card cardAdd, GameObject cardCopyAdd, Vector3 startingPosition, int offset)
     {
-        Vector3 position = new Vector3(startingPosition.x + 0.005f * offset, startingPosition.y, startingPosition.z - 0.0001f * offset);
-        Vector3 angle = transform.rotation.eulerAngles;
+        position = new Vector3(startingPosition.x + 0.005f * offset, startingPosition.y, startingPosition.z - 0.0001f * offset);
+        angle = transform.rotation.eulerAngles;
+        scale = new Vector3(1f, 1f, 1f);
 
-        //Vector3 localScale = cardPrefab.transform.localScale * 1.25f;
-        //float localScaleY = transform.localScale.y;
-
-        float cardWidth = cardPrefab.GetComponent<BoxCollider2D>().size.x;
-        float maxWidth = transform.GetComponent<MeshRenderer>().bounds.size.x;
-        float leftPos = startingPosition.x - (maxWidth / 2);
-        float margin = cardWidth + 0.2f;
-
-        if(margin * (cardStack.Size - 1) > maxWidth)
+        if (cardStack.isGameStack)
         {
-            margin = maxWidth / (cardStack.Size - 1);
+            scale = new Vector3(1.25f, 1.25f, 1.25f);
+        }
+        else if (cardStack.transform.ToString().Contains("Player1"))
+        {
+            scale = new Vector3(1.75f, 1.75f, 1.75f);
+        }
+        else
+        {
+            scale = new Vector3(0.75f, 0.75f, 0.75f);
+        }
+
+        cardWidth = cardPrefab.GetComponent<BoxCollider2D>().size.x * scale.x;
+        maxWidth = transform.GetComponent<BoxCollider2D>().size.x;
+        leftPos = startingPosition.x - (maxWidth / 2) + (cardWidth / 2);
+        margin = cardWidth + 0.2f;
+
+        if (margin * cardStack.Size > maxWidth)
+        {
+            margin = (maxWidth - cardWidth) / (cardStack.Size - 1);
         }
 
         if (!cardStack.isGameStack)
@@ -164,13 +220,19 @@ public class CardStackView : MonoBehaviour
         cardCopyAdd.transform.rotation = Quaternion.Slerp(Quaternion.Euler(cardCopyAdd.transform.rotation.eulerAngles), Quaternion.Euler(angle), (Time.time - startTime) / 1f);
 
         // scale card
-        //cardCopyAdd.transform.localScale = Vector3.Lerp(cardCopyAdd.transform.localScale, localScale, (Time.time - startTime) / 1f);
+        cardCopyAdd.transform.localScale = Vector3.Lerp(cardCopyAdd.transform.localScale, scale, (Time.time - startTime) / 1f);
 
         cardAdd.cardPosition = position;
         cardAdd.cardRotation = angle;
+        cardAdd.scaleValue = scale;
 
         // group them up
         // make them as the children to the game object with this script attached
         cardCopyAdd.transform.SetParent(transform, true);
+        cardCopyAdd.layer = transform.gameObject.layer;
+        foreach(Transform child in cardCopyAdd.transform)
+        {
+            child.gameObject.layer = cardCopyAdd.layer;
+        }
     }
 }

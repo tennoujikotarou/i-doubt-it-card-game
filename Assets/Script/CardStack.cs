@@ -8,16 +8,19 @@ public class CardStack : MonoBehaviour
     private List<Card> cards;
     public bool isGameStack;
 
+    public bool zoomCard { get; set; }
+
+    public event CardRemovedEventHandler cardRemoved;
+
     void Awake()
     {
         cards = new List<Card>();
+        zoomCard = false;
         if (isGameStack)
         {
             NewStack();
         }
     }
-
-    public event CardRemovedEventHandler cardRemoved;
 
     public bool HasCard
     {
@@ -35,6 +38,11 @@ public class CardStack : MonoBehaviour
     public int Size
     {
         get { return cards == null ? 0 : cards.Count; }
+    }
+
+    public Card TransferCard(Card card, CardStack newStack)
+    {
+        return null;
     }
 
     public Card RemoveAt(int position)

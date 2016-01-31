@@ -25,9 +25,8 @@ Shuffle all the cards together. Deal them out as evenly as possible.
 The first player (defined by the rule) plays 1-4 cards from his/her hand:   
 
 * The card(s) is face down
-* He/she announces the rank of the card(s)   
-	(Ex: I play 1x Ace || I play 2x Two || etc; or just simply "Ace", "Two", etc)  
-
+* He/she announces the rank of the card(s)  
+(Ex: I play 1x Ace || I play 2x Two || etc; or just simply "Ace", "Two", etc)
  * The card(s)'s rank doesn't have to match with what he/she announce
  * The announced rank must go by order (Ex: Ace, King, Queen... || Ace, Two, Three...)  
 
@@ -49,11 +48,11 @@ A round is defined with each "Doubt" call **or** when all player pass their turn
 ###Extra 
 
 * Player can decide to pass not to play the card.  
-	If a player decide to pass his / her turn:
- * He / she can only have a few number of turn skip, and
- * He / she cannot play any card until next round (optional)
+ If a player decide to pass his / her turn:  
+ * He / she can only have a few number of turn skip, and  
+ * He / she cannot play any card until next round (optional)  
 
-	If all players decide not to play any cards:  
+ If all players decide not to play any cards:  
  * The game ends (・_・), or  
  * The pile of cards is removed from play.  
 		
