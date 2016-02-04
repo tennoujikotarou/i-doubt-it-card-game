@@ -19,6 +19,7 @@ public class CardModel : MonoBehaviour
 	// Use this for initialization
 	void Start () {
         _flipCard = false;
+        flipZoom = false;
         startTime = 100f;
     }
 	
@@ -34,7 +35,11 @@ public class CardModel : MonoBehaviour
             startTime = Time.time;
             _flipCard = false;
         }
-        Flip();
+
+        if(flipZoom)
+        {
+            Flip(flipZoom);
+        }
     }
 
     void OnMouseDown()
@@ -76,7 +81,8 @@ public class CardModel : MonoBehaviour
                 && player.localPlayer
                 && !player.playerStack.isGameStack)
             {
-                dealer.Add(player.playerStack.Remove(card));
+                //dealer.Add(player.playerStack.Remove(card));
+                dealer.Add(player.playerStack.TransferCard(card, dealer));
             }
         }
     }
@@ -93,7 +99,8 @@ public class CardModel : MonoBehaviour
                 && !player.isHuman
                 && !player.playerStack.isGameStack)
             {
-                dealer.Add(player.playerStack.Remove(card));
+                //dealer.Add(player.playerStack.Remove(card));
+                dealer.Add(player.playerStack.TransferCard(card, dealer));
             }
         }
     }
@@ -126,14 +133,21 @@ public class CardModel : MonoBehaviour
         set { _flipCard = value; card.FlipCard(); }
     }
 
-    public void Flip()
+    public bool flipZoom { get; set; }
+
+    public void Flip(bool zoom)
     {
         Vector3 angle = transform.rotation.eulerAngles;
         angle.y = card.isFacedUp ? 0f : 180f;
 
+        if(zoom)
+        {
+            transform.localScale = Vector3.Lerp(transform.localScale, new Vector3(3f, 3f, 3f), (Time.time - startTime) / 10f);
+        }
+
         transform.rotation = Quaternion.Slerp(
                 Quaternion.Euler(transform.rotation.eulerAngles), 
                 Quaternion.Euler(angle), 
-                (Time.time - startTime) / 1.5f);
+                (Time.time - startTime) / 10f);
     }
 }

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MenuManager : MonoBehaviour
 {
@@ -32,7 +31,7 @@ public class MenuManager : MonoBehaviour
     public void LoadPlayGame()
     {
         //Application.LoadLevel(1);
-        SceneManager.LoadScene("Game Scene");
+        Application.LoadLevel("Game Scene");
     }
 
     public void ExitGame()

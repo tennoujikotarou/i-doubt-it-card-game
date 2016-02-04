@@ -40,8 +40,46 @@ public class CardStack : MonoBehaviour
         get { return cards == null ? 0 : cards.Count; }
     }
 
+    public Card TransferCard(int position, CardStack newStack)
+    {
+        if (HasCard)
+        {
+            Card result = cards[position];
+
+            if (cardRemoved != null)
+            {
+                cardRemoved(this, new CardRemovedEventArgs(result.id, newStack));
+            }
+
+            cards.RemoveAt(position);
+            return result;
+        }
+        return null;
+    }
+
     public Card TransferCard(Card card, CardStack newStack)
     {
+        if (HasCard)
+        {
+            int position = -1;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (card.id == cards[i].id)
+                {
+                    position = i;
+                    break;
+                }
+            }
+            Card result = cards[position];
+
+            if (cardRemoved != null)
+            {
+                cardRemoved(this, new CardRemovedEventArgs(result.id, newStack));
+            }
+
+            cards.RemoveAt(position);
+            return result;
+        }
         return null;
     }
 

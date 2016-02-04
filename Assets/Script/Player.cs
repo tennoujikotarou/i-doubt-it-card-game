@@ -3,6 +3,13 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
+    public Sprite[] characterSprite;
+    public event DoubtCallEventHandler callDoubt;
+
+    public GameObject textBubble;
+    public Text message;
+    public Image avatar;
+
     public string PlayerName { get; set; }
     public string RealName { get; set; }
     public int playerIndex { get; set; }
@@ -23,7 +30,7 @@ public class Player : MonoBehaviour
 
     private int cardStackSize
     {
-        get { return GameObject.Find("Dealer").GetComponent<CardStack>().Size;  }
+        get { return GameObject.Find("Dealer").GetComponent<CardStack>().Size; }
     }
 
     private int honestChance
@@ -37,9 +44,9 @@ public class Player : MonoBehaviour
         {
             int currentRank = GameManager.currentRank + 1;
             int cardCount = 0;
-            for(int i = 0; i < playerStack.Size; i++)
+            for (int i = 0; i < playerStack.Size; i++)
             {
-                if(playerStack.transform.GetChild(i).GetComponent<CardModel>().rank == currentRank)
+                if (playerStack.transform.GetChild(i).GetComponent<CardModel>().rank == currentRank)
                 {
                     cardCount++;
                 }
@@ -63,13 +70,16 @@ public class Player : MonoBehaviour
         }
     }
 
-    private Sprite[] neptuneSprite;
-    public event DoubtCallEventHandler callDoubt;
+    void Awake()
+    {
+        textBubble.SetActive(false);
+    }
 
     void Start()
     {
         string playerButton = PlayerName + "ButtonDoubt";
-        if(playerButton.Contains("Player1")) {
+        if (playerButton.Contains("Player1"))
+        {
             Button btnDoubt = GameObject.Find(playerButton).GetComponent<Button>();
             btnDoubt.onClick.AddListener(delegate { Doubt(); });
         }
@@ -78,7 +88,11 @@ public class Player : MonoBehaviour
         isDoubtDiceRolled = false;
 
         GameObject.Find(PlayerName + "Name").GetComponent<Text>().text = RealName;
-        //neptuneSprite = Resources.LoadAll<Sprite>("neptune_sprite");
+
+        if (PlayerName.Contains("Player1")) { characterSprite = Resources.LoadAll<Sprite>("neptune_sprite"); }
+        if (PlayerName.Contains("Player2")) { characterSprite = Resources.LoadAll<Sprite>("noire_sprite"); }
+        if (PlayerName.Contains("Player3")) { characterSprite = Resources.LoadAll<Sprite>("blanc_sprite"); }
+        if (PlayerName.Contains("Player4")) { characterSprite = Resources.LoadAll<Sprite>("vert_sprite"); }
     }
 
     public void Doubt()
@@ -95,14 +109,15 @@ public class Player : MonoBehaviour
     void Update()
     {
         GameObject.Find(PlayerName + "Cards").GetComponent<Text>().text = "On Hand: " + playerStack.Size;
-        if(!isHuman) { 
+        if (!isHuman)
+        {
             if (isPlayerTurn && playerStack.Size != 0 && !isPlayDiceRolled)
             {
                 AutoPlay();
                 isPlayDiceRolled = true;
             }
 
-            if(canCallDoubt && !isDoubtDiceRolled && cardStackSize >= 3)
+            if (canCallDoubt && !isDoubtDiceRolled && cardStackSize >= 3)
             {
                 AutoDoubt();
                 isDoubtDiceRolled = true;
@@ -132,7 +147,7 @@ public class Player : MonoBehaviour
         Debug.Log("Current rank: " + currentRank);
         Debug.Log(PlayerName + " turn: " + playerTurn);
         endGameRank = ((((playerStack.Size - 1) * numberOfPlayer) % 13) + currentRank + playerTurn);
-        endGameRank = endGameRank < 14 ? endGameRank : (endGameRank - 13);
+        endGameRank = endGameRank < 14 ? endGameRank : (endGameRank % 13 == 0 ? 13 : endGameRank - 13 * (endGameRank / 13));
         Debug.Log(PlayerName + " end rank: " + endGameRank);
         Debug.Log("=========================");
     }
@@ -156,8 +171,8 @@ public class Player : MonoBehaviour
         }
 
         // Still have tons of cards in hand, should not play the card for now...
-        if (playerStack.transform.GetChild(randomPlay).GetComponent<CardModel>().rank == endGameRank 
-            && (playerStack.Size >= 7 || playerStack.Size <= 4) 
+        if (playerStack.transform.GetChild(randomPlay).GetComponent<CardModel>().rank == endGameRank
+            && (playerStack.Size >= 7 || playerStack.Size <= 4)
             && matchCardCount == 1)
         {
             canHonest = false;
@@ -172,7 +187,7 @@ public class Player : MonoBehaviour
             {
                 randomPlay = Random.Range(0, playerStack.Size);
                 loopBreak++;
-                if(loopBreak > 10000)
+                if (loopBreak > 10000)
                 {
                     break;
                 }
@@ -204,6 +219,133 @@ public class Player : MonoBehaviour
         if (diceRoll < DoubtChance)
         {
             Invoke("Doubt", 0.5f);
+        }
+    }
+
+    public string DoubtSuccessMsg()
+    {
+        if (PlayerName.Contains("Player1")) { avatar.sprite = characterSprite[4]; }
+        if (PlayerName.Contains("Player2")) { avatar.sprite = characterSprite[7]; }
+        if (PlayerName.Contains("Player3")) { avatar.sprite = characterSprite[5]; }
+        if (PlayerName.Contains("Player4")) { avatar.sprite = characterSprite[7]; }
+        switch (Random.Range(0, 5))
+        {
+            case 0: return "Mwahaha~~!!";
+            case 1: return "So obvious.";
+            case 2: return "You can't fool me!";
+            case 3: return "Phew, close call.";
+            case 4: return "Dundundun~~";
+            default: return "Yay, I got it right!";
+        }
+    }
+    public string DoubtFailMsg()
+    {
+        if (PlayerName.Contains("Player1")) { avatar.sprite = characterSprite[Random.Range(9, 13)]; }
+        if (PlayerName.Contains("Player2")) { avatar.sprite = characterSprite[Random.Range(10, 13)]; }
+        if (PlayerName.Contains("Player3")) { avatar.sprite = characterSprite[Random.Range(9, 11)]; }
+        if (PlayerName.Contains("Player4")) { avatar.sprite = characterSprite[Random.Range(9, 12)]; }
+        switch (Random.Range(0, 5))
+        {
+            case 0: return "Noooo!!!";
+            case 1: return "L-Lucky shot!";
+            case 2: return "Such... trick...";
+            case 3: return "Ouch!";
+            case 4: return "Goodbye, world...";
+            default: return "...";
+        }
+    }
+
+    public string DoubtDodgeSuccessMsg()
+    {
+        if (PlayerName.Contains("Player1")) { avatar.sprite = characterSprite[4]; }
+        if (PlayerName.Contains("Player2")) { avatar.sprite = characterSprite[7]; }
+        if (PlayerName.Contains("Player3")) { avatar.sprite = characterSprite[5]; }
+        if (PlayerName.Contains("Player4")) { avatar.sprite = characterSprite[7]; }
+        switch (Random.Range(0, 5))
+        {
+            case 0: return "Huehuehue~~";
+            case 1: return "I got you!";
+            case 2: return "Oh no you don't.";
+            case 3: return "Dadada~~~";
+            case 4: return "Here's your present~!!";
+            default: return "Take this!";
+        }
+    }
+
+    public string DoubtDodgeFailMsg()
+    {
+        if (PlayerName.Contains("Player1")) { avatar.sprite = characterSprite[Random.Range(9, 13)]; }
+        if (PlayerName.Contains("Player2")) { avatar.sprite = characterSprite[Random.Range(10, 13)]; }
+        if (PlayerName.Contains("Player3")) { avatar.sprite = characterSprite[Random.Range(9, 11)]; }
+        if (PlayerName.Contains("Player4")) { avatar.sprite = characterSprite[Random.Range(9, 12)]; }
+        switch (Random.Range(0, 5))
+        {
+            case 0: return "NOOOO!!!";
+            case 1: return "Ugh...";
+            case 2: return "Ooh... nooo....";
+            case 3: return "Waaaah~~!!";
+            case 4: return "RIP, me.";
+            default: return "...";
+        }
+    }
+
+    public string DoubtResponseMsg()
+    {
+        if (PlayerName.Contains("Player1")) { avatar.sprite = characterSprite[8]; }
+        if (PlayerName.Contains("Player2")) { avatar.sprite = characterSprite[9]; }
+        if (PlayerName.Contains("Player3")) { avatar.sprite = characterSprite[8]; }
+        if (PlayerName.Contains("Player4")) { avatar.sprite = characterSprite[8]; }
+        switch (Random.Range(0, 5))
+        {
+            case 0: return "!!!";
+            case 1: return "Gah!";
+            case 2: return "Erk!";
+            case 3: return "Nyuu~?";
+            case 4: return "Can't be helped...";
+            default: return "...";
+        }
+    }
+
+    public string WinFailMsg()
+    {
+        if (PlayerName.Contains("Player1")) { avatar.sprite = characterSprite[16]; }
+        if (PlayerName.Contains("Player2")) { avatar.sprite = characterSprite[13]; }
+        if (PlayerName.Contains("Player3")) { avatar.sprite = characterSprite[15]; }
+        if (PlayerName.Contains("Player4")) { avatar.sprite = characterSprite[14]; }
+        switch (Random.Range(0, 5))
+        {
+            case 0: return "Why can't I win...";
+            case 1: return "Nuuuu!";
+            case 2: return "Waaaa...";
+            case 3: return "Nyauu~~!!!";
+            case 4: return "N-Next time!";
+            default: return "...";
+        }
+    }
+
+    public string WinMsg()
+    {
+        if (PlayerName.Contains("Player1")) { avatar.sprite = characterSprite[3]; }
+        if (PlayerName.Contains("Player2")) { avatar.sprite = characterSprite[4]; }
+        if (PlayerName.Contains("Player3")) { avatar.sprite = characterSprite[4]; }
+        if (PlayerName.Contains("Player4")) { avatar.sprite = characterSprite[4]; }
+        switch (Random.Range(0, 1))
+        {
+            case 0: return "YAY!";
+            default: return "...";
+        }
+    }
+
+    public string DoubtMsg()
+    {
+        if (PlayerName.Contains("Player1")) { avatar.sprite = characterSprite[1]; }
+        if (PlayerName.Contains("Player2")) { avatar.sprite = characterSprite[2]; }
+        if (PlayerName.Contains("Player3")) { avatar.sprite = characterSprite[1]; }
+        if (PlayerName.Contains("Player4")) { avatar.sprite = characterSprite[1]; }
+        switch (Random.Range(0, 1))
+        {
+            case 0: return "Doubt!";
+            default: return "...";
         }
     }
 }

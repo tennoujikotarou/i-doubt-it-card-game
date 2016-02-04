@@ -48,6 +48,7 @@ A round is defined with each "Doubt" call **or** when all player pass their turn
 ###Extra 
 
 * Player can decide to pass not to play the card.  
+ The rank counter still increasing each skip call or staying until a player play a card, will be defined by the rule.  
  If a player decide to pass his / her turn:  
  * He / she can only have a few number of turn skip, and  
  * He / she cannot play any card until next round (optional)  
@@ -74,6 +75,7 @@ If being forced, the player who announced must produce from his/her hand a card 
 * Goal of the game
 * Number of players
 * Order of card rank
+* Turn skip
 * 1st player
 * Number of cards can place down the table
 * Allow Joker card(s)

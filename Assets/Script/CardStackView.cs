@@ -9,11 +9,15 @@ public class CardStackView : MonoBehaviour
     private Sprite[] cardTextures;
     private CardStack cardStack;
 
-    private Dictionary<int, GameObject> fetchedCard;
+    public Dictionary<int, GameObject> fetchedCard;
     private int stackLastCount;
     
     private float startTime;
     private Vector3 startingPos;
+
+    private float moveTime;
+    private float rotateTime;
+    private float scaleTime;
 
     private Vector3 position;
     private Vector3 angle;
@@ -27,6 +31,10 @@ public class CardStackView : MonoBehaviour
     {
         //cardPrefab = (GameObject) AssetDatabase.LoadAssetAtPath("Assets/Prefab/Card.prefab", typeof(GameObject));
         cardTextures = Resources.LoadAll<Sprite>("card_sheet_small");
+
+        moveTime = 1f;
+        rotateTime = 1f;
+        scaleTime = 1f;
     }
 
     // Use this for initialization
@@ -41,6 +49,21 @@ public class CardStackView : MonoBehaviour
         // Get the game object's position to put the cards on
         startTime = Time.time;
         startingPos = transform.position;
+
+        scale = new Vector3(1f, 1f, 1f);
+
+        if (cardStack.isGameStack)
+        {
+            scale = new Vector3(1.25f, 1.25f, 1.25f);
+        }
+        else if (cardStack.transform.ToString().Contains("Player1"))
+        {
+            scale = new Vector3(1.75f, 1.75f, 1.75f);
+        }
+        else
+        {
+            scale = new Vector3(0.75f, 0.75f, 0.75f);
+        }
 
         ShowCards(false);
     }
@@ -60,7 +83,32 @@ public class CardStackView : MonoBehaviour
     {
         if (fetchedCard.ContainsKey(e.CardIndex))
         {
-            Destroy(fetchedCard[e.CardIndex]);
+            // fetch the card OameObject...
+            GameObject cardTransfer = fetchedCard[e.CardIndex];
+            cardTransfer.GetComponent<CardModel>().flipZoom = false;
+
+            if (e.NewStack.transform.ToString().Contains("Player1"))
+            {
+                cardTransfer.GetComponent<CardModel>().isFacedUp = true;
+            }
+            else
+            {
+                cardTransfer.GetComponent<CardModel>().isFacedUp = false;
+            }
+
+            // ...add it to the new stack's fetch list
+            // and reapply its parent to the new stack GameObject...
+            e.NewStack.GetComponent<CardStackView>().fetchedCard.Add(e.CardIndex, cardTransfer);
+            cardTransfer.transform.SetParent(e.NewStack.transform, true);
+
+            // ...and reapply its layer to the new stack GameObject
+            cardTransfer.layer = e.NewStack.transform.gameObject.layer;
+            foreach (Transform child in cardTransfer.transform)
+            {
+                child.gameObject.layer = cardTransfer.layer;
+            }
+
+            //Destroy(fetchedCard[e.CardIndex]);
             fetchedCard.Remove(e.CardIndex);
         }
     }
@@ -83,7 +131,7 @@ public class CardStackView : MonoBehaviour
         {
             startTime = Time.time;
             stackLastCount = cardStack.Size;
-            ShowCards(true);
+            //ShowCards(true);
         }
 
         int offset = -1;
@@ -97,6 +145,7 @@ public class CardStackView : MonoBehaviour
             }
 
             GameObject cardCopy = transform.GetChild(offset).gameObject;
+            if(cardCopy.GetComponent<CardModel>().flipZoom) { continue; }
             ArrangeCard(card, cardCopy, transform.position, offset);
         }
 
@@ -111,14 +160,14 @@ public class CardStackView : MonoBehaviour
                 leftPos = startingPos.x - (maxWidth / 2);
 
                 float newWidth = (cardWidth + 0.2f) * cardStack.Size;
-                float newPosX = leftPos + (newWidth / 2);
+                //float newPosX = leftPos + (newWidth / 2);
 
-                transform.position = Vector3.Lerp(transform.position, new Vector3(transform.position.x, -5.23f, -1f), (Time.time - startTime) / 1f);
+                transform.position = Vector3.Lerp(transform.position, new Vector3(transform.position.x, -5.23f, -1f), (Time.time - startTime) / moveTime);
                 transform.GetComponent<BoxCollider2D>().size = new Vector2(newWidth, 3.5f);
             }
             else
             {
-                transform.position = Vector3.Lerp(transform.position, startingPos, (Time.time - startTime) / 1f);
+                transform.position = Vector3.Lerp(transform.position, startingPos, (Time.time - startTime) / moveTime);
                 transform.GetComponent<BoxCollider2D>().size = new Vector2(16f, 3.5f);
             }
 
@@ -176,21 +225,6 @@ public class CardStackView : MonoBehaviour
     void ArrangeCard(Card cardAdd, GameObject cardCopyAdd, Vector3 startingPosition, int offset)
     {
         position = new Vector3(startingPosition.x + 0.005f * offset, startingPosition.y, startingPosition.z - 0.0001f * offset - 0.0001f);
-        angle = transform.rotation.eulerAngles;
-        scale = new Vector3(1f, 1f, 1f);
-
-        if (cardStack.isGameStack)
-        {
-            scale = new Vector3(1.25f, 1.25f, 1.25f);
-        }
-        else if (cardStack.transform.ToString().Contains("Player1"))
-        {
-            scale = new Vector3(1.75f, 1.75f, 1.75f);
-        }
-        else
-        {
-            scale = new Vector3(0.75f, 0.75f, 0.75f);
-        }
 
         cardWidth = cardPrefab.GetComponent<BoxCollider2D>().size.x * scale.x;
         maxWidth = transform.GetComponent<BoxCollider2D>().size.x;
@@ -208,7 +242,9 @@ public class CardStackView : MonoBehaviour
         }
 
         // face down = 180f, face up = 0f (for my card prefab)
-        angle.y = cardAdd.isFacedUp ? 0f : 180f;
+        angle = transform.rotation.eulerAngles;
+        //angle.y = cardAdd.isFacedUp ? 0f : 180f;
+        angle.y = cardCopyAdd.GetComponent<CardModel>().isFacedUp ? 0f : 180f;
 
         // move the cards to their respective position
         // instant position and rotation, no "moving animation"
@@ -216,12 +252,12 @@ public class CardStackView : MonoBehaviour
         //cardCopyAdd.transform.rotation = Quaternion.Euler(angle);
 
         // "moving and rotation animation"
-        cardCopyAdd.transform.position = Vector3.Lerp(cardCopyAdd.transform.position, position, (Time.time - startTime) / 1f);
-        cardCopyAdd.transform.rotation = Quaternion.Slerp(Quaternion.Euler(cardCopyAdd.transform.rotation.eulerAngles), Quaternion.Euler(angle), (Time.time - startTime) / 1f);
+        cardCopyAdd.transform.position = Vector3.Lerp(cardCopyAdd.transform.position, position, (Time.time - startTime) / moveTime);
+        cardCopyAdd.transform.rotation = Quaternion.Slerp(Quaternion.Euler(cardCopyAdd.transform.rotation.eulerAngles), Quaternion.Euler(angle), (Time.time - startTime) / rotateTime);
 
         // scale card
-        cardCopyAdd.transform.localScale = Vector3.Lerp(cardCopyAdd.transform.localScale, scale, (Time.time - startTime) / 1f);
-
+        cardCopyAdd.transform.localScale = Vector3.Lerp(cardCopyAdd.transform.localScale, scale, (Time.time - startTime) / scaleTime);
+        
         cardAdd.cardPosition = position;
         cardAdd.cardRotation = angle;
         cardAdd.scaleValue = scale;
